@@ -8,6 +8,8 @@ import time
 from ftplib import FTP
 from dotenv import load_dotenv
 
+from ttkthemes import ThemedTk
+
 load_dotenv()
 
 host = os.getenv("HOST")
@@ -169,7 +171,8 @@ def selecionar_pasta(textarea):
         textarea.delete(0, "end")
         textarea.insert("end", pasta_selecionada)
 
-root = tk.Tk()
+root = ThemedTk(theme="arc")
+
 root.title("DasherSync")
 
 root.geometry("600x100")
@@ -179,16 +182,16 @@ root.resizable(False, False)
 root.grid_columnconfigure(0, weight=1)
 root.grid_rowconfigure(0, weight=1)
 
-textarea_select_folder = tk.Entry(root)
+textarea_select_folder = ttk.Entry(root)
 textarea_select_folder.grid(row=0, column=0, padx=10, pady=(2, 2), sticky="ew")
 
-select_folder_button = tk.Button(root, text="Select", command=lambda: selecionar_pasta(textarea_select_folder))
+select_folder_button = ttk.Button(root, text="Select", command=lambda: selecionar_pasta(textarea_select_folder))
 select_folder_button.grid(row=0, column=1, padx=10, pady=(2, 2))
 
 progress_bar = ttk.Progressbar(root ,value=0, maximum=100)
 progress_bar.grid(row=2, columnspan=2, padx=10, pady=(2, 2), sticky="ew")
 
-iniciar_button = tk.Button(root, text="Iniciar", command=iniciar)
+iniciar_button = ttk.Button(root, text="Iniciar", command=iniciar)
 iniciar_button.grid(row=3, columnspan=2, padx=10, pady=(2, 2), sticky="ew")
 
 root.mainloop()
