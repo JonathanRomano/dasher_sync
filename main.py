@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog, messagebox
+from appdirs import user_config_dir
 
 import os
 import datetime
@@ -10,7 +11,15 @@ from dotenv import load_dotenv
 
 from ttkthemes import ThemedTk
 
-load_dotenv()
+config_dir = user_config_dir()
+
+env_path = os.path.join(config_dir, 'dasher_sync/.env')
+
+if not os.path.exists(env_path):
+    messagebox.showinfo("ERRO", f"Não foi possível encontrar o arquivo de configuração em: {env_path}")
+    exit()
+
+load_dotenv(env_path)
 
 host = os.getenv("HOST")
 user = os.getenv("ID")
@@ -26,10 +35,10 @@ def directory_exists(ftp, directory_path):
 
     files = ftp.nlst(parent_dir)
 
-    if len(splited_path) == 1:
+    if len(splited_path) <= 2:
         return dir_name in files
 
-    return f'{parent_dir}/{dir_name}' in files
+    return directory_path in files
 
 def make_folders(ftp, path):
     folders = path.split('/')
@@ -38,7 +47,9 @@ def make_folders(ftp, path):
     for folder in folders:
         current_path += folder
 
+        print('path:' + current_path)
         if not directory_exists(ftp, current_path):
+            print('criando: ' + current_path)
             ftp.mkd(current_path)
         
         current_path += '/'
@@ -102,13 +113,16 @@ Total de arquivos: {len(files)}
 
     def get_all_files(ftp):
         file_list = []
-        current_folder_list = ['ANIM', 'FAB', 'INSTRUCTIONS', 'JPG', 'LOGO', 'MISE_NUIT', 'MP4', 'PSD', 'SCHEMA', 'SOURCE'] # Diretorios padrão do force
+        current_folder_list = [folder for folder in ftp.nlst() if folder in default_folders]
+        print(current_folder_list)
 
         while current_folder_list != []:
             current_items = []
 
             for folder in current_folder_list:
-                current_items += ftp.nlst(folder)
+                print('folder: ' + folder)
+                print(ftp.nlst(folder))
+                current_items += [f'{folder}/{item.split("/")[-1]}' for item in ftp.nlst(folder)]
 
             file_list += [item for item in current_items if not is_dir(item)]
             current_folder_list = [item for item in current_items if is_dir(item)]
@@ -152,8 +166,6 @@ Arquivos ignorados: {len(files) - (pasted_files + synced_files)}
 # LOG END #
 '''
     
-    print(log)
-    
     messagebox.showinfo("Concluído", f"{len(files)} arquivos sincronizados em {elapsed_time:.2f} segundos.")
 
     progress_bar['value'] = 0
@@ -162,7 +174,7 @@ Arquivos ignorados: {len(files) - (pasted_files + synced_files)}
     date = datetime.date.today().strftime("%d-%m-%Y")
     current_folder = os.path.dirname(os.path.abspath(__file__))
 
-    with open(f"{current_folder}/logs/{date}.txt", "a") as log_file:
+    with open(f"{config_dir}/dasher_sync/logs/{date}.txt", "a") as log_file:
         log_file.write(log)
 
 def selecionar_pasta(textarea):
@@ -183,10 +195,10 @@ root.grid_columnconfigure(0, weight=1)
 root.grid_rowconfigure(0, weight=1)
 
 textarea_select_folder = ttk.Entry(root)
-textarea_select_folder.grid(row=0, column=0, padx=10, pady=(2, 2), sticky="ew")
+textarea_select_folder.grid(row=1, column=0, padx=10, pady=(2, 2), sticky="ew")
 
 select_folder_button = ttk.Button(root, text="Select", command=lambda: selecionar_pasta(textarea_select_folder))
-select_folder_button.grid(row=0, column=1, padx=10, pady=(2, 2))
+select_folder_button.grid(row=1, column=1, padx=10, pady=(2, 2))
 
 progress_bar = ttk.Progressbar(root ,value=0, maximum=100)
 progress_bar.grid(row=2, columnspan=2, padx=10, pady=(2, 2), sticky="ew")
